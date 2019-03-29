@@ -7,7 +7,7 @@ typedef struct node {
 	struct node * right;
 } node;
 
-node * search(int freq, node * n);
+node * search(int freq, char * token, node * n, node * parent);
 node * get_max(node * n);
 node * get_min(node * n);
-node * insert(char * token, int freq, node * n);
+node * insert(int freq, char * token, node * n);
