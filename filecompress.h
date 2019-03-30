@@ -16,10 +16,4 @@ typedef struct llist_node {
 	struct llist_node * next;
 } llist_node;
 
-/*node * createNode(char * token, unsigned int freq);
-tree * createTree(unsigned int cap);
-void insert(node * ptr; tree * root);
-void buildTree(tree * root);
-tree * createHeap(, unsigned int size);
-node * buildHuffman(node, unsigned int size);*/
 void huffman(unsigned int size, llist_node * node);
