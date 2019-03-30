@@ -1,6 +1,8 @@
 #include<stdlib.h>
 #include<stdio.h>
 #include<string.h>
+#include<unistd.h>
+#include<fcntl.h>
 #include "filecompress.h"
 
 llist_node * head = NULL;
@@ -25,7 +27,7 @@ void insert_list(char * token, unsigned int freq) {
 	if (strcmp(head->token, temp->token) == 0) {
 		return;
 	}
-	if (temp->freq < head->freq) {
+	if (temp->freq <= head->freq) {
 		temp->next = head;
 		head = temp;
 //		printf("inserting %s\n", temp->token);
@@ -36,7 +38,7 @@ void insert_list(char * token, unsigned int freq) {
 		if(strcmp(ptr->next->token, temp->token) == 0) {
 			return;
 		}
-		if (temp->freq < ptr->next->freq) {
+		if (temp->freq <= ptr->next->freq) {
 			temp->next = ptr->next;
 			ptr->next = temp;
 //			printf("inserting %s\n", temp->token);
@@ -52,15 +54,21 @@ void insert_list(char * token, unsigned int freq) {
 
 int main() {
 	int size = 0;
+	int fd = open("./HuffmanCodebook.hcz", O_CREAT | O_RDWR, 0644);
+	write(fd,"\\\n", 2);
 	insert_list("a", 5);
-	insert_list("b", 9);
-	insert_list("c", 12);
-	insert_list("d", 13);
-	insert_list("e", 16);
-	insert_list("f", 45);
-	size = 6;
-	print_list(head);
-	printf("about to huff\n");
-	huffman(size,head);
+	insert_list("<space>",5);
+	insert_list("dog", 5);
+	insert_list("cat", 5);
+	insert_list("button", 5);
+	insert_list("tab", 5);
+	insert_list("ball", 5);
+	insert_list("and", 5);
+	size = 8;
+//	print_list(head);
+//	printf("about to huff\n");
+	huffman(size, head, fd);
+	write(fd,"\n",1);
+	close(fd);
 	return EXIT_SUCCESS;
 }
