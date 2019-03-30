@@ -3,7 +3,8 @@
 #include<string.h>
 #include<unistd.h>
 #include<fcntl.h>
-#include "fcompress.h"
+#include<limits.h>
+#include "fcdatastructs.h"
 
 llist_node * head = NULL;
 
@@ -63,16 +64,15 @@ int main(int argc, char ** argv) {
 	int total_length = read(fd_file, temp, INT_MAX);
 	char * input = malloc(sizeof(char)*total_length + 1);
 	strcpy(input, temp);
-	free(input);
+	free(temp);
 	
 	/*Additional setup*/
 	write(fd_codebook,"\\\n", 2);
-	unsigned short size = 0;
 	int i = 0;
-
 	
+	unsigned int size = 3;
 	/*Test code*/
-	insert_list("a", 5);
+/*	insert_list("a", 5);
 	insert_list("<space>",5);
 	insert_list("dog", 5);
 	insert_list("cat", 5);
@@ -80,11 +80,11 @@ int main(int argc, char ** argv) {
 	insert_list("tab", 5);
 	insert_list("ball", 5);
 	insert_list("and", 5);
-	size = 8;
+	size = 8; 
 //	print_list(head);
-//	printf("about to huff\n");
+//	printf("about to huff\n"); */
 	huffman(size, head, fd_codebook);
-	write(fd,"\n",1);
-	close(fd);
+	write(fd_codebook,"\n",1);
+	close(fd_codebook);
 	return EXIT_SUCCESS;
 }

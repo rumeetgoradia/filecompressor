@@ -1,10 +1,10 @@
-all: fileCompressor.c fcompress.o
-	gcc -fsanitize=address -o fileCompressor fileCompressor.c fcompress.o
+all: fileCompressor.c fcdatastructs.o
+	gcc -fsanitize=address -o fileCompressor fileCompressor.c fcdatastructs.o
 
-fcompress.o: fcompress.c
-	gcc -c fcompress.c
+fcdatastructs.o: fcdatastructs.c
+	gcc -c fcdatastructs.c
 
 clean:
-	rm -f fcompress.o
+	rm -f fcdatastructs.o
 	rm -f fileCompressor
 	rm -f HuffmanCodebook.hcz

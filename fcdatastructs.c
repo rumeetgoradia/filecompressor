@@ -1,7 +1,7 @@
 #include<string.h>
 #include<stdlib.h>
 #include<stdio.h>
-#include "fcompress.h"
+#include "fcdatastructs.h"
 
 void print_list(llist_node * root) {
 	llist_node * ptr = root;
