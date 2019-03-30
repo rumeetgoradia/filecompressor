@@ -52,10 +52,26 @@ void insert_list(char * token, unsigned int freq) {
 	return;
 }
 
-int main() {
-	int size = 0;
-	int fd = open("./HuffmanCodebook.hcz", O_CREAT | O_RDWR, 0644);
-	write(fd,"\\\n", 2);
+int main(int argc, char ** argv) {
+	/*Open relevant files.*/
+	int fd_codebook = open("./HuffmanCodebook.hcz", O_CREAT | O_RDWR, 0644);
+	char * file = strcat("./", argv[1]);
+	int fd_file = open(file, O_RDONLY);
+
+	/*Store entire file into one string that will be tokenized later.*/
+	char * temp = malloc(sizeof(char)*INT_MAX);
+	int total_length = read(fd_file, temp, INT_MAX);
+	char * input = malloc(sizeof(char)*total_length + 1);
+	strcpy(input, temp);
+	free(input);
+	
+	/*Additional setup*/
+	write(fd_codebook,"\\\n", 2);
+	unsigned short size = 0;
+	int i = 0;
+
+	
+	/*Test code*/
 	insert_list("a", 5);
 	insert_list("<space>",5);
 	insert_list("dog", 5);
@@ -67,7 +83,7 @@ int main() {
 	size = 8;
 //	print_list(head);
 //	printf("about to huff\n");
-	huffman(size, head, fd);
+	huffman(size, head, fd_codebook);
 	write(fd,"\n",1);
 	close(fd);
 	return EXIT_SUCCESS;
