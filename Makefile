@@ -1,9 +1,10 @@
-test: test.c filecompress.o
-	gcc -fsanitize=address -o test test.c filecompress.o
+all: fileCompressor.c fcompress.o
+	gcc -fsanitize=address -o fileCompressor fileCompressor.c fcompress.o
 
-filecompress.o: filecompress.c
-	gcc -c filecompress.c
+fcompress.o: fcompress.c
+	gcc -c fcompress.c
 
 clean:
-	rm -f filecompress.o
-	rm -f test
+	rm -f fcompress.o
+	rm -f fileCompressor
+	rm -f HuffmanCodebook.hcz

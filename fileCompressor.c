@@ -3,7 +3,7 @@
 #include<string.h>
 #include<unistd.h>
 #include<fcntl.h>
-#include "filecompress.h"
+#include "fcompress.h"
 
 llist_node * head = NULL;
 

@@ -1,7 +1,7 @@
 #include<string.h>
 #include<stdlib.h>
 #include<stdio.h>
-#include "filecompress.h"
+#include "fcompress.h"
 
 void print_list(llist_node * root) {
 	llist_node * ptr = root;
