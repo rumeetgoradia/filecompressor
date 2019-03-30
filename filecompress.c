@@ -74,3 +74,45 @@ tree * full_tree(llist_node * node, unsigned int size) {
 	build_tree(root);
 	return root;
 }
+
+tree * build_huffman(llist node * node, unsigned int size) {
+	tree_node * parent;
+	tree_node * left;
+	tree_node * right;
+	tree * root = full_tree(node, size);
+	while (root->size != 1) {
+		left = remove_min(root);
+		right = remove_min(root);
+		parent = create_node("/\\", left->freq + right->freq);
+		parent->left = left;
+		parent->right = right;
+		insert_tree_node(root, parent);
+	}
+	return remove_min(root);
+}
+
+void set_codes(tree_node * node, unsigned int code_arr[], int parent) {
+	if (node->left != NULL) {
+		code_arr[parent] = 0;
+		set_codes(node->left, code_arr, parent+1);
+	}
+	if (node->right != NULL) {
+		code_arr[parent] = 1;
+		set_codes(node->right, code_arr, parent+1);
+	} 
+	if (node->left == NULL && node->right == NULL) {
+		printf("%s ", node->token);
+		int = 0;
+		for (i = 0; i < parent; ++i) {
+			printf("%d", code_arr[i]);
+		}
+		printf("\n");
+	}
+}
+
+void huffman(unsigned int size, llist_node * node) {
+	tree_node * base = build_huffman(node, size);
+	int codes[size];
+	set_codes(base, codes, size);
+}
+

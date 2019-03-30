@@ -11,7 +11,9 @@ typedef struct tree {
 } tree;
 
 typedef struct llist_node {
-	/*Aditi put your node definition here*/
+	unsigned int freq;
+	char * token;
+	struct llist_node * next;
 } llist_node;
 
 /*node * createNode(char * token, unsigned int freq);
