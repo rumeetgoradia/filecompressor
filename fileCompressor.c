@@ -1,168 +1,272 @@
 #include<stdlib.h>
 #include<stdio.h>
 #include<string.h>
+#include<sys/types.h>
+#include<sys/stat.h>
 #include<unistd.h>
 #include<fcntl.h>
 #include<limits.h>
-#include "fcdatastructs.h"
+#include<dirent.h>
+#include"fcdatastructs.h"
+#include"tokenizer.h"
 
 llist_node * head = NULL;
 
-void insert_list(char * token) {
+int insert_list(char * token) {
 	llist_node * temp;
 	llist_node * ptr;
 	temp = (llist_node *)malloc(sizeof(llist_node));
 	if (temp == NULL) {
 		printf("Insufficient memory.\n");
-		return;
+		return -1;
 	}
 	temp->freq = 1;
-	temp->token = token;
-//	printf("token: %s\n", token);
+	temp->token = (char *)malloc(strlen(token) + 1);
+	strncpy(temp->token, token, (strlen(token)));
 	/*Case 1: New List*/
 	if (head == NULL) {
-//		printf("entering first case\n");
 		head = temp;
 		temp->next = NULL;
-//		print_list(head);
-		return;
+		return 1;
 	}
-//	printf("going to case 2\n");	
 	if (strcmp(token, (head->token)) == 0) {
-//		printf("got past comparison\n");
 		++head->freq;
-//		print_list(head);
-		return;
+		return 0;
 	}
-//	printf("going to case 3\n");
-	if (temp->freq <= head->freq) {
+	if (temp->freq >= head->freq && head->next == NULL) {
 		temp->next = head;
 		head = temp;
-//		printf("inserting %s\n", temp->token);
-//		print_list(head);
-		return;
+		return 1;
 	}
 	ptr = head;
-//	printf("entering while\n");
 	while (ptr->next != NULL) {
 		if(strcmp(ptr->next->token, token) == 0) {
 			++ptr->next->freq;
-//			print_list(head);
-			return;
-		}
-		if (temp->freq <= ptr->next->freq) {
-			temp->next = ptr->next;
-			ptr->next = temp;
-//			printf("inserting %s", temp->token);
-//			print_list(head);
-			return;
+			return 0;
 		}
 		ptr = ptr->next;
 	}
 	ptr->next = temp;
 	temp->next = NULL;
-	return;
+	return 1;
 }
 
 unsigned int tokenize(char * input) {
 	if (input == NULL || strlen(input) == 0) {
 		return 0;
 	}
-	char * token;
 	int i = 0, j = 0;
 	int pos_last_sep = 0;
 	int token_len = 0;
 	int length = strlen(input);
 	int last_was_sep = 1;
-	int count = 0;	
-//	printf("input string: %s\n", input);
+	int current_sep = 1;
+	int count = 0;
 	for (i = 0; i < length; i++) {
 		if (input[i] != '\t' && input[i] != '\n' && input[i] != ' ') {
 			++token_len;
-			last_was_sep = 0;	
+			last_was_sep = 0;
+			current_sep = 0;
 		} else if (last_was_sep == 0) {
-			token = (char *)malloc(sizeof(char) * (token_len + 1));
+			char * token = (char *)malloc(sizeof(char) * (token_len + 1));
 			if (token == NULL) {
-				printf("Insufficient memory.\n");
-				return EXIT_FAILURE;
-			}		
+				printf("Error: Insufficient memory.\n");
+				return -1;
+			}
 			int freq = 0;
 			for (j = 0; j < token_len; ++j) {
-//				printf("Enter inner for loop\n");
 				token[j] = input[pos_last_sep + j];
 			}
 			token[token_len] = '\0';
 			pos_last_sep += token_len + 1;
-//			printf("Inserting\n");
-			insert_list(token);
-//			printf("inserted\n");
-			++count;
+			int inc = insert_list(token);
+			if (inc == -1) {
+				return -1;
+			}
+			count += inc;
 			last_was_sep = 1;
 			token_len = 0;
+			current_sep = 1;
+			free(token);
 		}
 		else {
 			++pos_last_sep;
+			current_sep = 1;
+		}
+		if (current_sep == 1) {
+			int inc = 0;
+			if(input[i] == ' ') {
+				inc = insert_list("~)!(@s*#&$^");
+				if (inc == -1) {
+					return -1;
+				}
+			} else if (input[i] == '\t') {
+				inc = insert_list("~)!(@t*#&$^");
+				if (inc == -1) {
+					return -1;
+				}
+			} else {
+				inc = insert_list("~)!(@n*#&$^");
+				if (inc == -1) {
+					return -1;
+				}
+			}
+			count += inc;
 		}
 	}
-//	printf("finished for loop in tokenize\n");
 	if (token_len > 0) {
-		token = (char *)malloc(sizeof(char) * (token_len + 1));
+		char * token = (char *)malloc(sizeof(char) * (token_len + 1));
 		if (token == NULL) {
-			printf("Insufficient memory.\n");
-			return EXIT_FAILURE;
+			printf("Error: Insufficient memory.\n");
+			return -1;
 		}
 		for (j = 0; j < token_len; ++j) {
 			token[j] = input[pos_last_sep + j];
 		}
 		token[token_len] = '\0';
-		insert_list(token);
-		++count;
+		int inc = insert_list(token);
+		if (inc == -1) {
+			return -1;
+		}
+		count += inc;
+		free(token);
 	}
-	free(token);
 	return count;
 }
 
+void populate_arrs(char ** codes, char ** tokens, char * input, int length) {
+	int i = 0, j = 0;
+	int last_whitespace = 0;
+	int string_length = 0;
+	int index = 0;
+	for (i = 0; i < length - 1; ++i) {
+		if (input[i] == '\t' || input[i] == '\n') {
+			char * string = (char *)malloc(sizeof(char) * (string_length + 1));
+			for (j = 0; j < string_length; ++j) {
+				string[j] = input[last_whitespace + j];
+			}
+			string[string_length] = '\0';
+			last_whitespace += string_length + 1;
+			string_length = 0;
+			if (input[i] == '\t') {
+				codes[index] = (char *)malloc(strlen(string) + 1);
+				strncpy(codes[index], string, (strlen(string)));
+			} else {
+				tokens[index] = (char *)malloc(strlen(string) + 1);
+				strncpy(tokens[index], string, (strlen(string)));
+				++index;
+			}
+			free(string);
+		} else {
+			++string_length;
+		}
+	}
+}
+
 int main(int argc, char ** argv) {
-	/*Open relevant files.*/
-	int fd_codebook = open("./HuffmanCodebook.hcz", O_CREAT | O_RDWR, 0644);
-	char * prefix = (char *)malloc(sizeof(char) * (3+strlen(argv[1])));
-	prefix[0] = '.';
-	prefix[1] = '/';
-	char * file = strcat(prefix, argv[1]);
-	int fd_file = open(file, O_RDONLY);
-
-
-
-	/*Store entire file into one string that will be tokenized later.*/
-	char * temp = malloc(sizeof(char)*INT_MAX);
-	int total_length = read(fd_file, temp, INT_MAX);
-	char * input = malloc(sizeof(char)*total_length + 1);
-	strcpy(input, temp);
-	free(temp);
-	printf("finished getting input string\n");
-	
-	/*Additional setup*/
-	write(fd_codebook,"\\\n", 2);
-	
-	
-	unsigned int size = tokenize(input);
-	printf("finished tokenizing\n");
-	/*Test code*/
-/*	insert_list("a", 5);
-	insert_list("<space>",5);
-	insert_list("dog", 5);
-	insert_list("cat", 5);
-	insert_list("button", 5);
-	insert_list("tab", 5);
-	insert_list("ball", 5);
-	insert_list("and", 5);
-	size = 8; 
-//	print_list(head);
-//	printf("about to huff\n"); */
-	huffman(size, head, fd_codebook);	
-	write(fd_codebook,"\n",1);
-	close(fd_codebook);
-	close(fd_file);
+	int recursive = 0;
+	int is_file = 1;
+	if (strcmp("-R",argv[1]) == 0 && strcmp("-R",argv[2]) == 0) {
+		recursive = 1;
+	}
+	if (argc < 3) {
+		printf("Error: Not enough arguments. Please try again.\n");
+		return EXIT_FAILURE;
+	}
+	char * file = argv[3 + (recursive - 1)];
+	char * path = file;
+	char flag = ' ';
+	if (recursive) {
+		if (strcmp("-R", argv[1]) == 0) {
+			flag = argv[2][1];
+		} else {
+			flag = argv[1][1];
+		}
+	} else {
+		flag = argv[1][1];
+	}
+	if (recursive) {
+		struct stat pstat;
+		if (stat(file, &pstat) != 0) {
+			printf("Error: You lack permissions to the file or path specified, or it doesn't exist. Please try again.\n");
+			return EXIT_FAILURE;
+		}
+		is_file = S_ISREG(pstat.st_mode);
+		int i = strlen(file) - 1;
+		for (i = strlen(file) - 1; i >= 0; --i) {
+			if (i != strlen(file) - 1 && file[i] == '/') {
+				path[i + 1] = '\0';
+				break;
+			}
+		}
+	}
+	if (is_file) {
+		int fd_file = open(file, O_RDONLY);
+		char * temp = (char *)malloc(sizeof(char) * INT_MAX);
+		int total_length = read(fd_file, temp, INT_MAX);
+		char * input = (char *)malloc(sizeof(char) * (total_length + 1));
+		strcpy(input, temp);
+		printf("%s\n%d\n", input, total_length);
+		free(temp);
+		if (flag == 'b') {
+			if (argc > 4 + (recursive - 1)) {
+				printf("Error: Too many arguments. Please try again.\n");
+				return EXIT_FAILURE;
+			}
+			int fd_codebook = open("./HuffmanCodebook", O_RDWR | O_CREAT | O_TRUNC, 0644);
+			int size = tokenize(input);
+			if (size > 1) {
+				huffman(size, head, fd_codebook);
+			} else if (size == 1) {
+				write(fd_codebook,"0\t",2);
+				write(fd_codebook, head->token, strlen(head->token));
+				write(fd_codebook,"\n", 1);
+			}
+			write(fd_codebook,"\n",1);
+			close(fd_codebook);
+		}
+		if (flag == 'c' || flag == 'd') {
+			int fd_codebook = open(argv[argc - 1], O_RDWR);
+			temp = (char *)malloc(sizeof(char) * INT_MAX);
+			int codebook_length = read(fd_codebook, temp, INT_MAX);
+			char * codebook_input = (char *)malloc(sizeof(char) * (codebook_length + 1));
+			strcpy(codebook_input, temp);
+			free(temp);
+			int size = count_codebook(codebook_input, codebook_length);
+//			printf("%s\n", codebook_input);
+			char ** codes = (char **)malloc(sizeof(char *) * size);
+			char ** tokens = (char **)malloc(sizeof(char *) * size);
+			populate_arrs(codes, tokens, codebook_input, codebook_length);
+/*			int i = 0;
+			for (i = 0; i < size; ++i) {
+				printf("%s\t%s\n", codes[i], tokens[i]);
+			}*/
+			if (flag == 'c') {
+				char * hczfile = strcat(file, ".hcz");
+				if (recursive) {
+					hczfile = strcat(path, hczfile);
+				}
+				int fd_hcz = open(hczfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
+				int i = 0;
+/*                        	for (i = 0; i < size; ++i) {
+					printf("%s\t%s\n", codes[i], tokens[i]);
+				} */
+				compress(fd_hcz, input, total_length, codes, tokens, size);
+				close(fd_hcz);
+			} else {
+				char * resfile = file;
+				resfile[strlen(file) - 4] = '\0';
+				if (recursive) {
+					resfile = strcat(path, resfile);
+				}
+				int fd_res = open(resfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
+				decompress(fd_res, input, total_length, codes, tokens, size);
+				close(fd_res);
+			}
+			close(fd_codebook);
+		}
+		close(fd_file);
+	}
 	free(head);
 	return EXIT_SUCCESS;
 }

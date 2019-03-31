@@ -5,21 +5,17 @@
 
 void print_list(llist_node * root) {
 	llist_node * ptr = root;
-//	printf("printing list\n");
 	for (ptr = root; ptr != NULL; ptr = ptr->next) {
 		printf("%s : %d\n", ptr->token, ptr->freq);
 	}
 }
 
 tree_node * create_node(char * token, unsigned int freq) {
-//	printf("enter create_node\n");
 	tree_node * ptr = (tree_node *)malloc(sizeof(tree_node));
 	ptr->left = NULL;
 	ptr->right = NULL;
-//	printf("create nodes left and right\n");
-	ptr->token = (char *)malloc((sizeof(char) * strlen(token)) + 1);
-	strcpy(ptr->token, token);
-//	printf("got past token\n");
+	ptr->token = (char *)malloc(strlen(token) + 1);
+	strncpy(ptr->token, token, (strlen(token)));
 	ptr->freq = freq;
 	return ptr;
 }
@@ -39,35 +35,27 @@ void swap_nodes(tree_node ** first, tree_node ** second) {
 }
 
 void heapify(tree * root, int index) {
-//	printf("start heap\n");
 	int base = index;
 	int left = 2 * index + 1;
 	int right = 2 * index + 2;
-//	printf("heapify compares\n");
 	if (left < root->size && root->node_arr[left] != NULL && root->node_arr[base] != NULL && root->node_arr[left]->freq < root->node_arr[base]->freq) {
 		base = left;
 	}
 	if (right < root->size && root->node_arr[right] != NULL && root->node_arr[base] != NULL && root->node_arr[right]->freq < root->node_arr[base]->freq) {
 		base = right;
 	}
-//	printf("base: %d, index: %d\n", base, index);
 	if (root->node_arr[base] != NULL && root->node_arr[index] != NULL && base != index) {
-//		printf("replacing\n");
 		swap_nodes(&root->node_arr[base], &root->node_arr[index]);
 		heapify(root, base);
 	}
-//	printf("past if statement\n");
 	return;
 }
 
 tree_node * remove_min(tree * root) {
 	tree_node * ptr = root->node_arr[0];
-//	printf("got node_arr[0]\n");
 	int i = 1;
-	root->node_arr[0] = root->node_arr[root->size - i];		
-//	printf("got the other final\n");
-	root->size = root->size - 1;
-//	printf("remove_min heapify starting\n");
+	root->node_arr[0] = root->node_arr[root->size - i];
+	--root->size;
 	heapify(root, 0);
 	return ptr;
 }
@@ -75,7 +63,7 @@ tree_node * remove_min(tree * root) {
 void insert_tree_node(tree * root, tree_node * node) {
 	++root->size;
 	int i = root->size - 1;
-	while (i > 0 && (node->freq < root->node_arr[(i - 1)/2]->freq)) {
+	while (i > 0 && root->node_arr[(i - 1)/2] != NULL && node->freq < root->node_arr[(i - 1)/2]->freq) {
 		root->node_arr[i] = root->node_arr[(i - 1) / 2];
 		i = (i - 1) / 2;
 	}
@@ -84,32 +72,26 @@ void insert_tree_node(tree * root, tree_node * node) {
 
 void build_tree(tree * root) {
 	int i = 0;
-//	printf("size: %d\n", root->size);
 	int j = root->size - 1;
 	for (i = (j - 1) / 2; i >= 0; --i) {
 		heapify(root, i);
-//		printf("i: %d\n", i);	
 	}
-//	printf("done build-tree\n");
+
 }
 
 tree * full_tree(unsigned int size, llist_node * node) {
 	tree * root = create_tree(size);
-//	printf("got past create_tree\n");
 	llist_node * ptr = node;
 	int i = 0;
 	for (i = 0; i < size; ++i) {
 		root->node_arr[i] = create_node(ptr->token, ptr->freq);
-//		printf("got past create_node\n");
 		ptr = ptr->next;
 		if (ptr == NULL) {
 			break;
 		}
 	}
-//	printf("got past for loop in create_tree\n");
 	root->size = size;
 	build_tree(root);
-//	printf("got past build tree\n");
 	return root;
 }
 
@@ -118,24 +100,22 @@ tree_node * build_huffman(unsigned int size, llist_node * node) {
 	tree_node * left;
 	tree_node * right;
 	tree * root = full_tree(size, node);
-//	printf("got past full_tree\n");
 	while (root->size != 1) {
-//		printf("enter while loop\n");
 		left = remove_min(root);
 		right = remove_min(root);
-//		printf("right left done\n");
-		char temp[6] = "/////";		
-		if (left != NULL && right != NULL) {
-			parent = create_node(temp, left->freq + right->freq);
-//			printf("parent created\n");
-			parent->left = left;
-			parent->right = right;
-//			printf("parent done\n");
-			insert_tree_node(root, parent);
-//			printf("parent inserted\n");
+		int leftfreq = 0, rightfreq = 0;
+		if (left != NULL) {
+			leftfreq = left->freq;
 		}
+		if (right != NULL) {
+			rightfreq = right->freq;
+		}
+		char temp[3] = "/\\\0";
+		parent = create_node(temp, leftfreq + rightfreq);
+		parent->left = left;
+		parent->right = right;
+		insert_tree_node(root, parent);
 	}
-//	printf("got past build_huffman\n");
 	return remove_min(root);
 }
 
@@ -147,24 +127,28 @@ void set_codes(tree_node * node, unsigned short code_arr[], int parent, int fd) 
 	if (node->right != NULL) {
 		code_arr[parent] = 1;
 		set_codes(node->right, code_arr, parent+1, fd);
-	} 
+	}
 	if (node->left == NULL && node->right == NULL) {
 		int i = 0;
 		char buf[parent];
+		int count = 0;
 		for (i = 0; i < parent; ++i) {
-			buf[i] = code_arr[i] + '0';
+			if (code_arr[i] == 1 || code_arr[i] == 0) {
+				buf[i] = code_arr[i] + '0';
+				++count;
+			} else {
+				break;
+			}
 		}
-		write(fd, buf, strlen(buf));
+		write(fd, buf, count);
 		write(fd, "\t", 1);
 		write(fd, node->token, strlen(node->token));
 		write(fd, "\n", 1);
 	}
 }
 
-void huffman(unsigned int size, llist_node * root, int fd) {
+void huffman(int size, llist_node * root, int fd) {
 	tree_node * base = build_huffman(size, root);
-//	printf("got past building huffman\n");
 	short codes[size];
 	set_codes(base, codes, 0, fd);
 }
-
