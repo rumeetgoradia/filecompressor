@@ -117,7 +117,7 @@ unsigned int tokenize(char * input) {
 
 int main(int argc, char ** argv) {
 	/*Open relevant files.*/
-	int fd_codebook = open("./HuffmanCodebook.hcz", O_CREAT | O_RDWR, 0644);
+	int fd_codebook = open("./HuffmanCodebook", O_CREAT | O_RDWR, 0644);
 	char * prefix = (char *)malloc(sizeof(char) * (3+strlen(argv[1])));
 	prefix[0] = '.';
 	prefix[1] = '/';

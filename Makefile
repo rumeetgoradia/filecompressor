@@ -7,4 +7,4 @@ fcdatastructs.o: fcdatastructs.c
 clean:
 	rm -f fcdatastructs.o
 	rm -f fileCompressor
-	rm -f HuffmanCodebook.hcz
+	rm -f HuffmanCodebook
