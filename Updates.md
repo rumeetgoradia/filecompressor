@@ -1,8 +1,7 @@
 # Work in Progress
-- Decompression flag
+- Recursion flag
 
 # Not Started
-- Recursion flag
 - Readme file
 - Test cases
 
@@ -13,3 +12,4 @@
 - Makefile
 - File input
 - Compression flag
+- Decompression flag

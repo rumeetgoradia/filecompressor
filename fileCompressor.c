@@ -99,12 +99,12 @@ unsigned int tokenize(char * input) {
 		}
 		if (current_sep == 1) {
 			if(input[i] == ' ') {
-				count += insert_list(" ");
+				count += insert_list("~)!(@s*#&$^");
 			} else if (input[i] == '\t') {
-				count += insert_list("\\t");
+				count += insert_list("~)!(@t*#&$^");
 			} else {
 //				printf("inserting new line\n");
-				count += insert_list("\\n");
+				count += insert_list("~)!(@n*#&$^");
 			}
 		}
 	}
@@ -154,7 +154,6 @@ void populate_arrs(char ** codes, char ** tokens, char * input, int length) {
 }
 
 int main(int argc, char ** argv) {
-	/*Open relevant files.*/
 	int recursive = 0;
 	if (strcmp("-R",argv[1]) == 0 && strcmp("-R",argv[2]) == 0) {
 		recursive = 1;
@@ -199,15 +198,22 @@ int main(int argc, char ** argv) {
 		char ** codes = (char **)malloc(sizeof(char *) * size);
 		char ** tokens = (char **)malloc(sizeof(char *) * size);
 		populate_arrs(codes, tokens, codebook_input, codebook_length);
-		int i = 0;
+/*		int i = 0;
 		for (i = 0; i < size; ++i) {
 			printf("%s\t%s\n", codes[i], tokens[i]);
-		}
+		}*/
 		if (flag == 'c') {
 			char * hczfile = strcat(file, ".hcz");
-			int fd_hcz = open(hczfile, O_RDWR | O_CREAT | O_APPEND, 0644);
+			int fd_hcz = open(hczfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
 			compress(fd_hcz, input, total_length, codes, tokens, size);
 			close(fd_hcz);
+		} else {
+			file[total_length - 4] = '\0';
+//			char * resfile = file;
+			char * resfile = "result.txt";
+			int fd_res = open(resfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
+			decompress(fd_res, input, total_length, codes, tokens, size);
+			close(fd_res);
 		}
 	}
 	close(fd_codebook);

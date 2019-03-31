@@ -13,3 +13,4 @@ clean:
 	rm -f fileCompressor
 	rm -f HuffmanCodebook
 	rm -f *.hcz
+	rm -f result.txt
