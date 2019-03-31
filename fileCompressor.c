@@ -118,6 +118,35 @@ unsigned int tokenize(char * input) {
 	return count - 1;
 }
 
+void populate_arrs(char ** codes, char ** tokens, char * input, int length) {
+	int i = 0, j = 0;
+	int last_whitespace = 0;
+	int string_length;
+	int index = 0;
+	for (i = 0; i < length - 1; ++i) {
+		if (input[i] == '\t' || input[i] == '\n') {
+			char * string = (char *)malloc(sizeof(char) * (string_length + 1));
+			for (j = 0; j < string_length; ++j) {
+				string[j] = input[last_whitespace + j];
+			}
+			string[string_length] = '\0';
+			last_whitespace += string_length + 1;
+			string_length = 0;
+			if (input[i] == '\t') {
+				codes[index] = (char *)malloc(sizeof(string) + 1);
+				strncpy(codes[index], string, (sizeof(string)));
+			} else {
+				tokens[index] = (char *)malloc(sizeof(string) + 1);
+				strncpy(tokens[index], string, (sizeof(string)));
+				++index;
+			}
+			free(string);	
+		} else {
+			++string_length;
+		}
+	}
+}
+
 int main(int argc, char ** argv) {
 	/*Open relevant files.*/
 	int recursive = 0;
@@ -166,11 +195,11 @@ int main(int argc, char ** argv) {
 /*		int i = 0;
 		for (i = 0; i < size; ++i) {
 			printf("%s\t%s\n", codes[i], tokens[i]);
-		} */
+		}*/
 		if (flag == 'c') {
 			char * hczfile = strcat(file, ".hcz");
 			int fd_hcz = open(hczfile, O_RDWR | O_CREAT | O_APPEND, 0644);
-			
+			compress(fd_hcz, input, total_length, codes, tokens, size);
 			close(fd_hcz);
 		}
 	}

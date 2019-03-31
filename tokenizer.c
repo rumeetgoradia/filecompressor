@@ -13,31 +13,40 @@ int count_codebook(char * input, int length) {
 	return count;
 }
 
-void populate_arrs(char ** codes, char ** tokens, int size, char * input, int length) {
+int search(char ** arr, int size, char * string) {
+	int i = 0;
+	for (i = 0; i < size; ++i) {	
+		if (strcmp(arr[i], string) == 0) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+void compress(int fd, char * input, int length, char ** codes, char ** tokens, int size) {
 	int i = 0, j = 0;
+	int token_length;
 	int last_whitespace = 0;
-	int string_length;
-	int index = 0;
-	for (i = 0; i < length - 1; ++i) {
-		if (input[i] == '\t' || input[i] == '\n') {
-			char * string = (char *)malloc(sizeof(char) * (string_length + 1));
-			for (j = 0; j < string_length; ++j) {
+	int space_index = search(tokens, size, " ");
+	int nl_index = search(tokens, size, "\\n");
+	for (i = 0; i < length; ++i) {
+		if (input[i] == '\t' || input[i] == '\n' || input[i] == ' ') {
+			char * string = (char *)malloc(sizeof(char) * (token_length + 1));
+			for (j = 0; j < token_length; ++j) {
 				string[j] = input[last_whitespace + j];
 			}
-			string[string_length] = '\0';
-			last_whitespace += string_length + 1;
-			string_length = 0;
-			if (input[i] == '\t') {
-				codes[index] = (char *)malloc(sizeof(string) + 1);
-				strncpy(codes[index], string, (sizeof(string)));
-			} else {
-				tokens[index] = (char *)malloc(sizeof(string) + 1);
-				strncpy(tokens[index], string, (sizeof(string)));
-				++index;
+			string[token_length] = '\0';
+			last_whitespace += token_length + 1;
+			token_length = 0;
+			write(fd, codes[search(tokens, size, string)], sizeof(codes[search(tokens, size, string)]));
+			free(string);
+			if (input[i] == ' ') {
+				write(fd, codes[space_index], sizeof(codes[space_index]));
+			} else if (input[i] == '\n') {
+				write(fd, codes[nl_index], sizeof(codes[nl_index]));
 			}
-			free(string);	
 		} else {
-			++string_length;
+			++token_length;
 		}
 	}
 }
