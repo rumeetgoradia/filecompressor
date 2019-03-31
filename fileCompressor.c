@@ -296,16 +296,8 @@ int main(int argc, char ** argv) {
 				close(fd_hcz);
 			} else {
 				char * resfile = file;
-<<<<<<< HEAD
-				resfile[strlen(file) - 4] = '\0';
-				if (recursive) {
-					resfile = strcat(path, resfile);
-				}
-				int fd_res = open(resfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
-=======
 				resfile[strlen(file) - 4] = '\0';	
 				int fd_res = open(resfile, O_WRONLY | O_CREAT , 0644);
->>>>>>> 09d4aff66b148da2974438462a2d1b97e630ec21
 				decompress(fd_res, input, total_length, codes, tokens, size);
 				close(fd_res);
 			}
