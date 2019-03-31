@@ -1,13 +1,15 @@
+# Work in Progress
+- Recursion flag
+
+# Not Started
+- Readme file
+- Test cases
+
 # Complete
 - Huffman coding functionality
 - Output to HuffmanCodes.hcz
 - Linked list for storing tokens and frequency
 - Makefile
-
-# Work in Progress
 - File input
-
-# Not Started
-- Flags
-- Readme file
-- Test cases
+- Compression flag
+- Decompression flag
