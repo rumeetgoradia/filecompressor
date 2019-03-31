@@ -16,4 +16,4 @@ typedef struct llist_node {
 	struct llist_node * next;
 } llist_node;
 
-void huffman(unsigned int size, llist_node * node, int fd);
+void huffman(int size, llist_node * node, int fd);

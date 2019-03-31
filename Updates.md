@@ -3,11 +3,12 @@
 - Output to HuffmanCodes.hcz
 - Linked list for storing tokens and frequency
 - Makefile
-
-# Work in Progress
 - File input
 
+# Work in Progress
+- Compression flag
+
 # Not Started
-- Flags
+- Decompression flag
 - Readme file
 - Test cases
