@@ -163,10 +163,44 @@ void populate_arrs(char ** codes, char ** tokens, char * input, int length) {
 	}
 }
 
+int recursive_function(int fd, char * file, char flag) {
+	DIR * dr;
+	struct dirent * de;
+	int sum = 0;
+	if (!(dr = opendir(file))) {
+		return 0;
+	}
+	while ((de = readdir(dr)) != NULL) {
+		char new_path[1024];
+		snprintf(new_path, sizeof(new_path), "%s/%s", file, de->d_name);
+		if (de->d_type == DT_DIR) {
+			printf("%s\n", new_path);
+			if (strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, ".") == 0) {
+				continue;
+			}
+			sum += recursive_function(fd, new_path, flag);
+		} else {
+			printf("%s\n", new_path);
+			int fd_file = open(new_path, O_RDONLY);
+			char * temp = (char *)malloc(sizeof(char) * INT_MAX);
+			int total_length = read(fd_file, temp, INT_MAX);
+			char * input = (char *)malloc(sizeof(char) * (total_length + 1));
+			strcpy(input, temp); 
+			free(temp);
+			if (flag == 'b') {
+				printf("%s\n", input);
+				sum += tokenize(input);
+			}
+		}
+	}
+	closedir(dr);
+	return sum;
+}
+
 int main(int argc, char ** argv) {
 	int recursive = 0;
 	int is_file = 1;
-	if (strcmp("-R",argv[1]) == 0 && strcmp("-R",argv[2]) == 0) {
+	if (strcmp("-R",argv[1]) == 0 || strcmp("-R",argv[2]) == 0) {
 		recursive = 1;
 	}
 	if (argc < 3) {
@@ -174,7 +208,8 @@ int main(int argc, char ** argv) {
 		return EXIT_FAILURE;
 	}
 	char * file = argv[3 + (recursive - 1)];
-	char * path = file;
+	char * path = (char *)malloc(strlen(file) + 1);
+	strncpy(path, file, strlen(file));
 	char flag = ' ';
 	if (recursive) {
 		if (strcmp("-R", argv[1]) == 0) {
@@ -192,13 +227,20 @@ int main(int argc, char ** argv) {
 			return EXIT_FAILURE;
 		}
 		is_file = S_ISREG(pstat.st_mode);
-		int i = strlen(file) - 1;
-		for (i = strlen(file) - 1; i >= 0; --i) {
-			if (i != strlen(file) - 1 && file[i] == '/') {
-				path[i + 1] = '\0';
-				break;
+		if (is_file) {
+			int i = strlen(file) - 1;
+			for (i = strlen(file) - 1; i >= 0; --i) {
+				if (i != strlen(file) - 1 && file[i] == '/') {
+					path[i + 1] = '\0';
+					break;
+				}
+		
+			}
+			if (strcmp(file, path) == 0 && path[strlen(path) - 1] != '/') {
+				printf("Warning: You specified a file, not a path. Results may be undefined.\n");
 			}
 		}
+//		printf("%s\n", path);
 	}
 	if (is_file) {
 		int fd_file = open(file, O_RDONLY);
@@ -213,7 +255,9 @@ int main(int argc, char ** argv) {
 				printf("Error: Too many arguments. Please try again.\n");
 				return EXIT_FAILURE;
 			}
-			int fd_codebook = open("./HuffmanCodebook", O_RDWR | O_CREAT | O_TRUNC, 0644);
+//			printf("building\n");
+			int fd_codebook = open("./HuffmanCodebook", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+//			printf("%s\n", input);
 			int size = tokenize(input);
 			if (size > 1) {
 				huffman(size, head, fd_codebook);	
@@ -233,7 +277,7 @@ int main(int argc, char ** argv) {
 			strcpy(codebook_input, temp);
 			free(temp);
 			int size = count_codebook(codebook_input, codebook_length);
-//			printf("%s\n", codebook_input);
+
 			char ** codes = (char **)malloc(sizeof(char *) * size);
 			char ** tokens = (char **)malloc(sizeof(char *) * size);
 			populate_arrs(codes, tokens, codebook_input, codebook_length);
@@ -243,29 +287,46 @@ int main(int argc, char ** argv) {
 			}*/
 			if (flag == 'c') {
 				char * hczfile = strcat(file, ".hcz");
-				if (recursive) {
-					hczfile = strcat(path, hczfile);
-				}
 				int fd_hcz = open(hczfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
-				int i = 0;
-/*                        	for (i = 0; i < size; ++i) {
+/*				int i = 0;
+	                       	for (i = 0; i < size; ++i) {
 					printf("%s\t%s\n", codes[i], tokens[i]);
 				} */
 				compress(fd_hcz, input, total_length, codes, tokens, size);
 				close(fd_hcz);
 			} else {
 				char * resfile = file;
-				resfile[strlen(file) - 4] = '\0';
-				if (recursive) {
-					resfile = strcat(path, resfile);
-				}	
-				int fd_res = open(resfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
+				resfile[strlen(file) - 4] = '\0';	
+				int fd_res = open(resfile, O_WRONLY | O_CREAT , 0644);
 				decompress(fd_res, input, total_length, codes, tokens, size);
 				close(fd_res);
 			}	
 			close(fd_codebook);
 		}
 		close(fd_file);
+	} else {
+/*		struct dirent * de;
+		DIR * dr = opendir(file);
+		if (dr == NULL) {
+			printf("Error: Unable to open the directory \"%s\". Please try again.\n", file);
+			return EXIT_FAILURE;
+		}
+*/
+		if (flag == 'b') {
+			int fd_codebook = open("./HuffmanCodebook", O_WRONLY | O_CREAT | O_APPEND, 0644);	
+			int size = recursive_function(fd_codebook, file, flag);
+			printf("got size\n");
+			if (size > 1) {
+				huffman(size, head, fd_codebook);
+				printf("past huffman\n");
+			} else if (size == 1) {
+				write(fd_codebook,"0\t",2);
+				write(fd_codebook, head->token, strlen(head->token));
+				write(fd_codebook,"\n", 1);
+			}	
+			write(fd_codebook,"\n",1);
+			close(fd_codebook);
+		}
 	}
 	free(head);
 	return EXIT_SUCCESS;
