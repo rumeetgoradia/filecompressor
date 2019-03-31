@@ -17,7 +17,9 @@ int insert_list(char * token) {
 		return 0;
 	}
 	temp->freq = 1;
-	temp->token = token;
+	temp->token = (char *)malloc(sizeof(token) + 1);
+	strncpy(temp->token, token, (sizeof(token)));
+//	temp->token = token;
 	/*Case 1: New List*/
 	if (head == NULL) {
 		head = temp;
@@ -112,37 +114,99 @@ unsigned int tokenize(char * input) {
 		token[token_len] = '\0';
 		count += insert_list(token);
 	}
+	free(token);
+	return count - 1;
+}
+
+int count_codebook(char * input, int length) {
+	int count = 0;
+	int i = 0;
+	for (i = 0; i < length; ++i) {
+		if (input[i] == '\t') {
+			++count;
+		}
+	}
 	return count;
+}
+
+void populate_arrs(char ** codes, char ** tokens, int size, char * input, int length) {
+	int i = 0, j = 0;
+	int last_whitespace = 0;
+	int string_length;
+	int index = 0;
+	for (i = 0; i < length - 1; ++i) {
+		if (input[i] == '\t' || input[i] == '\n') {
+			char * string = (char *)malloc(sizeof(char) * (string_length + 1));
+			for (j = 0; j < string_length; ++j) {
+				string[j] = input[last_whitespace + j];
+			}
+			string[string_length] = '\0';
+			last_whitespace += string_length + 1;
+			string_length = 0;
+			if (input[i] == '\t') {
+				codes[index] = (char *)malloc(sizeof(string) + 1);
+				strncpy(codes[index], string, (sizeof(string)));
+			} else {
+				tokens[index] = (char *)malloc(sizeof(string) + 1);
+				strncpy(tokens[index], string, (sizeof(string)));
+				++index;
+			}
+			free(string);	
+		} else {
+			++string_length;
+		}
+	}
 }
 
 int main(int argc, char ** argv) {
 	/*Open relevant files.*/
-	int fd_codebook = open("./HuffmanCodebook", O_CREAT | O_RDWR, 0644);
-	char * prefix = (char *)malloc(sizeof(char) * (3+strlen(argv[1])));
-	prefix[0] = '.';
-	prefix[1] = '/';
-	char * file = strcat(prefix, argv[1]);
+	int recursive = 0;
+	if (strcmp("-R",argv[1]) == 0 && strcmp("-R",argv[2]) == 0) {
+		recursive = 1;
+	}
+	char * file = argv[3 + (recursive - 1)];
+	char flag = ' ';
+	if (recursive) {
+		if (strcmp("-R", argv[1]) == 0) {
+			flag = argv[2][1];
+		} else {
+			flag = argv[1][1];
+		}
+	} else {
+		flag = argv[1][1];
+	}
 	int fd_file = open(file, O_RDONLY);
-
-	/*Store entire file into one string that will be tokenized later.*/
-	char * temp = malloc(sizeof(char)*INT_MAX);
+	char * temp = (char *)malloc(sizeof(char) * INT_MAX);
 	int total_length = read(fd_file, temp, INT_MAX);
-	char * input = malloc(sizeof(char)*total_length + 1);
+	char * input = (char *)malloc(sizeof(char) * (total_length + 1));
 	strcpy(input, temp);
 	free(temp);
-	
-	/*Additional setup*/
-	write(fd_codebook,"\\\n", 2);
-		
-	int size = tokenize(input);
-	if (size > 1) {
-		huffman(size, head, fd_codebook);	
-	} else if (size == 1) {
-		write(fd_codebook,"0\t",2);
-		write(fd_codebook, head->token, strlen(head->token));
-		write(fd_codebook,"\n", 1);
+	int fd_codebook = open("./HuffmanCodebook", O_RDWR | O_CREAT | O_APPEND, 0644);
+	if (flag == 'b') {
+		int size = tokenize(input);
+		if (size > 1) {
+			huffman(size, head, fd_codebook);	
+		} else if (size == 1) {
+			write(fd_codebook,"0\t",2);
+			write(fd_codebook, head->token, strlen(head->token));
+			write(fd_codebook,"\n", 1);
+		}
+		write(fd_codebook,"\n",1);
 	}
-	write(fd_codebook,"\n",1);
+	if (flag == 'c' || flag == 'd') {
+		temp = (char *)malloc(sizeof(char) * INT_MAX);
+		int codebook_length = read(fd_codebook, temp, INT_MAX);
+		char * codebook_input = (char *)malloc(sizeof(char) * (codebook_length + 1));
+		strcpy(codebook_input, temp);
+		free(temp);
+		int size = count_codebook(codebook_input, codebook_length);
+		char ** codes = (char **)malloc(sizeof(char *) * size);
+		char ** tokens = (char **)malloc(sizeof(char *) * size);
+		populate_arrs(codes, tokens, size, codebook_input, codebook_length);
+		char * hczfile = strcat(file, ".hcz");
+		int fd_hcz = open(hczfile, O_RDWR | O_CREAT | O_APPEND, 0644);
+		close(fd_hcz);
+	}
 	close(fd_codebook);
 	close(fd_file);
 	free(head);
