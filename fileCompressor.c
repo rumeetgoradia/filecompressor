@@ -5,6 +5,7 @@
 #include<fcntl.h>
 #include<limits.h>
 #include "fcdatastructs.h"
+#include "tokenizer.h"
 
 llist_node * head = NULL;
 
@@ -129,10 +130,10 @@ int count_codebook(char * input, int length) {
 	return count;
 }
 
-void populate_arrs(char ** codes, char ** tokens, int size, char * input, int length) {
+void populate_arrs(char ** codes, char ** tokens, char * input, int length) {
 	int i = 0, j = 0;
 	int last_whitespace = 0;
-	int string_length;
+	int string_length = 0;
 	int index = 0;
 	for (i = 0; i < length - 1; ++i) {
 		if (input[i] == '\t' || input[i] == '\n') {
@@ -202,10 +203,17 @@ int main(int argc, char ** argv) {
 		int size = count_codebook(codebook_input, codebook_length);
 		char ** codes = (char **)malloc(sizeof(char *) * size);
 		char ** tokens = (char **)malloc(sizeof(char *) * size);
-		populate_arrs(codes, tokens, size, codebook_input, codebook_length);
-		char * hczfile = strcat(file, ".hcz");
-		int fd_hcz = open(hczfile, O_RDWR | O_CREAT | O_APPEND, 0644);
-		close(fd_hcz);
+		populate_arrs(codes, tokens, codebook_input, codebook_length);
+/*		int i = 0;
+		for (i = 0; i < size; ++i) {
+			printf("%s\t%s\n", codes[i], tokens[i]);
+		} */
+		if (flag == 'c') {
+			char * hczfile = strcat(file, ".hcz");
+			int fd_hcz = open(hczfile, O_RDWR | O_CREAT | O_APPEND, 0644);
+			
+			close(fd_hcz);
+		}
 	}
 	close(fd_codebook);
 	close(fd_file);
