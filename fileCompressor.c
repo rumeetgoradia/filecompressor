@@ -87,7 +87,6 @@ unsigned int tokenize(char * input) {
 			last_was_sep = 1;
 			token_len = 0;
 			current_sep = 1;
-			free(token);
 		}
 		else {
 			++pos_last_sep;
@@ -129,7 +128,6 @@ unsigned int tokenize(char * input) {
 			return -1;
 		}
 		count += inc;
-		free(token);
 	}
 	return count;
 }
@@ -188,7 +186,6 @@ int recursive_function(int fd, char * file, char flag) {
 			strcpy(input, temp); 
 			free(temp);
 			if (flag == 'b') {
-				printf("%s\n", input);
 				sum += tokenize(input);
 			}
 		}
@@ -315,10 +312,8 @@ int main(int argc, char ** argv) {
 		if (flag == 'b') {
 			int fd_codebook = open("./HuffmanCodebook", O_WRONLY | O_CREAT | O_APPEND, 0644);	
 			int size = recursive_function(fd_codebook, file, flag);
-			printf("got size\n");
 			if (size > 1) {
-				huffman(size, head, fd_codebook);
-				printf("past huffman\n");
+				huffman(size, head, fd_codebook);	
 			} else if (size == 1) {
 				write(fd_codebook,"0\t",2);
 				write(fd_codebook, head->token, strlen(head->token));

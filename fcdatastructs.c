@@ -10,12 +10,12 @@ void print_list(llist_node * root) {
 	}
 }
 
-tree_node * create_node(char * token, unsigned int freq) {
+tree_node * create_node(char * token, unsigned int freq) {	
 	tree_node * ptr = (tree_node *)malloc(sizeof(tree_node));
 	ptr->left = NULL;
 	ptr->right = NULL;
 	ptr->token = (char *)malloc(strlen(token) + 1);
-	strncpy(ptr->token, token, (strlen(token)));
+	strncpy(ptr->token, token, (strlen(token)));	
 	ptr->freq = freq;
 	return ptr;
 }
@@ -149,7 +149,6 @@ void set_codes(tree_node * node, unsigned short code_arr[], int parent, int fd) 
 
 void huffman(int size, llist_node * root, int fd) {
 	tree_node * base = build_huffman(size, root);
-	printf("past building\n");
 	short codes[size];
 	set_codes(base, codes, 0, fd);
 }
