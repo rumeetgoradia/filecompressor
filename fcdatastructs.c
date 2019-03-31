@@ -149,6 +149,7 @@ void set_codes(tree_node * node, unsigned short code_arr[], int parent, int fd) 
 
 void huffman(int size, llist_node * root, int fd) {
 	tree_node * base = build_huffman(size, root);
+	printf("past building\n");
 	short codes[size];
 	set_codes(base, codes, 0, fd);
 }
