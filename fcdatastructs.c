@@ -14,7 +14,8 @@ tree_node * create_node(char * token, unsigned int freq) {
 	tree_node * ptr = (tree_node *)malloc(sizeof(tree_node));
 	ptr->left = NULL;
 	ptr->right = NULL;
-	ptr->token = token;
+	ptr->token = (char *)malloc(strlen(token) + 1);
+	strncpy(ptr->token, token, (strlen(token)));
 	ptr->freq = freq;
 	return ptr;
 }
