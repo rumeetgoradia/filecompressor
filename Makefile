@@ -1,4 +1,4 @@
-all: fileCompressor.c fcdatastructs.o
+all: fileCompressor.c fcdatastructs.o tokenizer.o
 	gcc -fsanitize=address -o fileCompressor fileCompressor.c fcdatastructs.o tokenizer.o
 
 fcdatastructs.o: fcdatastructs.c
@@ -12,3 +12,4 @@ clean:
 	rm -f tokenizer.o
 	rm -f fileCompressor
 	rm -f HuffmanCodebook
+	rm -f *.hcz
