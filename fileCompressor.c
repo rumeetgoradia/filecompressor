@@ -209,22 +209,21 @@ int recursive_function(int fd, char * file, char flag, char ** codes, char ** to
 }
 
 int main(int argc, char ** argv) {
-	int recursive = 0;
-	int is_file = 1;
-	if (strcmp("-R",argv[1]) == 0 || strcmp("-R",argv[2]) == 0) {
-		recursive = 1;
-	}
 	if (argc < 3) {
 		printf("Error: Not enough arguments. Please try again.\n");
 		return EXIT_FAILURE;
 	} else if (argc > 5) {
 		printf("Error: Too many arguments. Please try again.\n");
 		return EXIT_FAILURE;
-		
+	}
+	int recursive = 0;
+	int is_file = 1;
+	if (strcmp("-R",argv[1]) == 0 || strcmp("-R",argv[2]) == 0) {
+		recursive = 1;
 	}
 	char * file = argv[3 + (recursive - 1)];
-	char * path = (char *)malloc(strlen(file) + 1);
-	strncpy(path, file, strlen(file));
+/*	char * path = (char *)malloc(strlen(file) + 1);
+	strncpy(path, file, strlen(file)); */
 	char flag = ' ';
 	if (recursive) {
 		if (strcmp("-R", argv[1]) == 0) {
@@ -243,15 +242,16 @@ int main(int argc, char ** argv) {
 		}
 		is_file = S_ISREG(pstat.st_mode);
 		if (is_file) {
-			int i = strlen(file) - 1;
-			for (i = strlen(file) - 1; i >= 0; --i) {
-				if (i != strlen(file) - 1 && file[i] == '/') {
-					path[i + 1] = '\0';
+			int i = i;
+			int path_check = 0;
+			for (i = 0; i < strlen(file); ++i) {
+				if (file[i] == '/') {
+					path_check = 1;
 					break;
 				}
 		
 			}
-			if (strcmp(file, path) == 0 && path[strlen(path) - 1] != '/') {
+			if (!path_check) {
 				printf("Warning: You specified a file, not a path. Results may be undefined.\n");
 			}
 		}
@@ -263,13 +263,12 @@ int main(int argc, char ** argv) {
 		int total_length = read(fd_file, temp, INT_MAX);
 		char * input = (char *)malloc(sizeof(char) * (total_length + 1));
 		strcpy(input, temp);
-		printf("%s\n%d\n", input, total_length);
 		free(temp);
 		if (flag == 'b') {
-			if (argc > 3) {
+			if (argc > (4 + recursive - 1)) {
 				printf("Error: Too many arguments. Please try again.\n");
 				return EXIT_FAILURE;
-			} else if (argc < 3) {
+			} else if (argc < (4 + recursive - 1)) {
 				printf("Error: Not enough arguments. Please try again.\n");
 				return EXIT_FAILURE;
 			}
@@ -288,10 +287,10 @@ int main(int argc, char ** argv) {
 			close(fd_codebook);
 		}
 		if (flag == 'c' || flag == 'd') {
-			if (argc > 4) {
+			if (argc > (5 + recursive - 1)) {
 				printf("Error: Too many arguments. Please try again.\n");
 				return EXIT_FAILURE;
-			} else if (argc < 4) {
+			} else if (argc < (5 + recursive - 1)) {
 				printf("Error: Not enough arguments. Please try again.\n");
 				return EXIT_FAILURE;
 			}
