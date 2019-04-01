@@ -113,6 +113,8 @@ unsigned int tokenize(char * input) {
 		/* If current char is a delimiter, enter it into linked list of tokens */
 		if (current_sep == 1) {
 			int inc = 0;
+			/* Instead of inputting whitespace, enter unique string that corresponds
+ 			 * to each different type of whitespace */ 
 			if(input[i] == ' ') {
 				inc = insert_list("~)!(@s*#&$^");
 				if (inc == -1) {
