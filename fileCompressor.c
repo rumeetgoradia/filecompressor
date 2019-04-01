@@ -87,7 +87,6 @@ unsigned int tokenize(char * input) {
 			last_was_sep = 1;
 			token_len = 0;
 			current_sep = 1;
-			free(token);
 		}
 		else {
 			++pos_last_sep;
@@ -129,7 +128,6 @@ unsigned int tokenize(char * input) {
 			return -1;
 		}
 		count += inc;
-		free(token);
 	}
 	return count;
 }
@@ -163,7 +161,7 @@ void populate_arrs(char ** codes, char ** tokens, char * input, int length) {
 	}
 }
 
-int recursive_function(int fd, char * file, char flag) {
+int recursive_function(int fd, char * file, char flag, char ** codes, char ** tokens, int size) {
 	DIR * dr;
 	struct dirent * de;
 	int sum = 0;
@@ -173,14 +171,12 @@ int recursive_function(int fd, char * file, char flag) {
 	while ((de = readdir(dr)) != NULL) {
 		char new_path[1024];
 		snprintf(new_path, sizeof(new_path), "%s/%s", file, de->d_name);
-		if (de->d_type == DT_DIR) {
-			printf("%s\n", new_path);
+		if (de->d_type == DT_DIR) {	
 			if (strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, ".") == 0) {
 				continue;
 			}
-			sum += recursive_function(fd, new_path, flag);
+			sum += recursive_function(fd, new_path, flag, codes, tokens, size);
 		} else {
-			printf("%s\n", new_path);
 			int fd_file = open(new_path, O_RDONLY);
 			char * temp = (char *)malloc(sizeof(char) * INT_MAX);
 			int total_length = read(fd_file, temp, INT_MAX);
@@ -188,8 +184,23 @@ int recursive_function(int fd, char * file, char flag) {
 			strcpy(input, temp); 
 			free(temp);
 			if (flag == 'b') {
-				printf("%s\n", input);
 				sum += tokenize(input);
+			} else if (flag == 'c') {
+				char * hczfile = strcat(new_path, ".hcz");
+				int fd_hcz = open(hczfile, O_WRONLY | O_CREAT , 0644);
+				compress(fd_hcz, input, total_length, codes, tokens, size);
+				close(fd_hcz);
+			} else if (flag == 'd') {
+				char * test = (char *)malloc(sizeof(char) * 5);
+				test = new_path + strlen(new_path) - 4;
+				if (strcmp(test, ".hcz") != 0) {
+					continue;
+				}
+				char * resfile = new_path;
+				resfile[strlen(new_path) - 4] = '\0';	
+				int fd_res = open(resfile, O_WRONLY | O_CREAT , 0644);
+				decompress(fd_res, input, total_length, codes, tokens, size);
+				close(fd_res);
 			}
 		}
 	}
@@ -206,6 +217,10 @@ int main(int argc, char ** argv) {
 	if (argc < 3) {
 		printf("Error: Not enough arguments. Please try again.\n");
 		return EXIT_FAILURE;
+	} else if (argc > 5) {
+		printf("Error: Too many arguments. Please try again.\n");
+		return EXIT_FAILURE;
+		
 	}
 	char * file = argv[3 + (recursive - 1)];
 	char * path = (char *)malloc(strlen(file) + 1);
@@ -251,8 +266,11 @@ int main(int argc, char ** argv) {
 		printf("%s\n%d\n", input, total_length);
 		free(temp);
 		if (flag == 'b') {
-			if (argc > 4 + (recursive - 1)) {
+			if (argc > 3) {
 				printf("Error: Too many arguments. Please try again.\n");
+				return EXIT_FAILURE;
+			} else if (argc < 3) {
+				printf("Error: Not enough arguments. Please try again.\n");
 				return EXIT_FAILURE;
 			}
 //			printf("building\n");
@@ -270,6 +288,13 @@ int main(int argc, char ** argv) {
 			close(fd_codebook);
 		}
 		if (flag == 'c' || flag == 'd') {
+			if (argc > 4) {
+				printf("Error: Too many arguments. Please try again.\n");
+				return EXIT_FAILURE;
+			} else if (argc < 4) {
+				printf("Error: Not enough arguments. Please try again.\n");
+				return EXIT_FAILURE;
+			}
 			int fd_codebook = open(argv[argc - 1], O_RDWR);
 			temp = (char *)malloc(sizeof(char) * INT_MAX);
 			int codebook_length = read(fd_codebook, temp, INT_MAX);
@@ -295,6 +320,12 @@ int main(int argc, char ** argv) {
 				compress(fd_hcz, input, total_length, codes, tokens, size);
 				close(fd_hcz);
 			} else {
+				char * test = (char *)malloc(sizeof(char) * 5);
+				test = file + strlen(file) - 4;
+				if (strcmp(test, ".hcz") != 0) {
+					printf("Error: Decoding requires a .hcz file.\n");
+					return EXIT_FAILURE;
+				}
 				char * resfile = file;
 				resfile[strlen(file) - 4] = '\0';	
 				int fd_res = open(resfile, O_WRONLY | O_CREAT , 0644);
@@ -305,26 +336,50 @@ int main(int argc, char ** argv) {
 		}
 		close(fd_file);
 	} else {
-/*		struct dirent * de;
-		DIR * dr = opendir(file);
-		if (dr == NULL) {
-			printf("Error: Unable to open the directory \"%s\". Please try again.\n", file);
-			return EXIT_FAILURE;
-		}
-*/
 		if (flag == 'b') {
-			int fd_codebook = open("./HuffmanCodebook", O_WRONLY | O_CREAT | O_APPEND, 0644);	
-			int size = recursive_function(fd_codebook, file, flag);
-			printf("got size\n");
+			if (argc < 4) {
+				printf("Error: Not enough arguments. Please try again.\n");
+				return EXIT_FAILURE;
+			} else if (argc > 4) {
+				printf("Error: Too many arguments. Please try again.\n");
+				return EXIT_FAILURE;
+			}
+			int fd_codebook = open("./HuffmanCodebook", O_WRONLY | O_CREAT | O_TRUNC, 0644);	
+			if (fd_codebook < 0) {
+				printf("Error: Could not create or open HuffmanCodebook. Please try again.\n");
+				return EXIT_FAILURE;
+			}
+			int size = recursive_function(fd_codebook, file, flag, NULL, NULL, 0);
 			if (size > 1) {
-				huffman(size, head, fd_codebook);
-				printf("past huffman\n");
+				huffman(size, head, fd_codebook);	
 			} else if (size == 1) {
 				write(fd_codebook,"0\t",2);
 				write(fd_codebook, head->token, strlen(head->token));
 				write(fd_codebook,"\n", 1);
 			}	
 			write(fd_codebook,"\n",1);
+			close(fd_codebook);
+		} else if (flag == 'c' || flag == 'd') {
+			if (argc < 5) {
+				printf("Error: Not enough arguments. Please try again.\n");
+				return EXIT_FAILURE;
+			} else if (argc > 5) {
+				printf("Error: Too many arguments. Please try again.\n");
+				return EXIT_FAILURE;
+			}
+			int fd_codebook = open(argv[argc - 1], O_RDONLY);
+			char * temp = (char *)malloc(sizeof(char) * INT_MAX);
+			int codebook_length = read(fd_codebook, temp, INT_MAX);
+			char * codebook_input = (char *)malloc(sizeof(char) * (codebook_length + 1));
+			strcpy(codebook_input, temp);
+			free(temp);
+			int size = count_codebook(codebook_input, codebook_length);
+			char ** codes = (char **)malloc(sizeof(char *) * size);
+			char ** tokens = (char **)malloc(sizeof(char *) * size);
+			populate_arrs(codes, tokens, codebook_input, codebook_length);
+			recursive_function(0, file, flag, codes, tokens, size);
+			free(codes);
+			free(tokens);
 			close(fd_codebook);
 		}
 	}
