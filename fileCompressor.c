@@ -1,8 +1,8 @@
-/********************************* 
- * Aditi Singh and Rumeet Goradia
- * as2811, rug5
- * CS214: Section 04
-*********************************/
+/*********************************
+* Aditi Singh and Rumeet Goradia *
+* as2811, rug5                   *
+* CS214: Section 04              *
+**********************************/
 #include<stdlib.h>
 #include<stdio.h>
 #include<string.h>
