@@ -1,35 +1,37 @@
-Aditi Singh and Rumeet Goradia
-Testplan
+/*********************************
+* Aditi Singh and Rumeet Goradia *
+* as2811, rug5                   *
+* CS214: Section 04              *
+**********************************/
 
-************************************************************************************************************************************************
-
-In order to test our program we detailed a number of possible errors that could occur. Within input testing we tested what would be displayed when:
+In order to test our program we detailed a number of possible errors that could occur. Within command line input testing we tested what would be displayed when:
 		1)An incorrect number of arguments were entered
-		2)If there were incorrect flags
-		3)If the file did not have the correct permissions
-		4)If the file did not exist
-		5)If there was an improper codebook or non hcz file for decompression
+		2)There were incorrect flags
+		3)The file in the file field did not have the correct permissions
+		4)The file in the file field did not exist
+		5)There was an improper file in the codebook field for compression/decompression
+		6)There was a non .hcz file in the file field for decompression
 Through all of these test cases, a proper error message was displayed.
 
--------------------------------------------------------------------------------------------------------------------------------------------------
+
 In terms of basic testing for a directory with a non-recusive input, we tested scenarios such as:
 		1)If the file was empty
-		2)What would happen if compress is called on a file who's tokens are not in the Huffan codebook
+		2)What would happen if compress is called on a file whose tokens are not in the Huffman codebook
 		3)Files with one token
 		4)Files wih multiple tokens
 
-For the 1st scenario the program would display an error message. For the 2nd scenario the program would exit. For the 3rd and 4th scenario both work normally as expected. 
+For the first scenario, the program would display an error message and completely exit. For the other scenarios, operation worked as expected.
 
--------------------------------------------------------------------------------------------------------------------------------------------------
+
 In terms of basic testing for a directory with a recursive input, we tested scenarios such as:
-		1)What would happen if a directory has multiple levels of sub directories, empty-directories, and/or empty sub-directories
-		2)If there are directories with multiple directories but only one file
+		1)What would happen if a directory has multiple levels of sub directories, empty and non-empty
+		2)If there are directories with multiple sub-directories but only one file
 		3)If there are direcroties with a combination of sub-directories and files 
-		4)Whether a file would behave just as if no recursion was called
+		4)Whether a file in the file field would behave just as if no recursion was called
+		5)What would happen if a directory was empty
 
-For all four of these scenarios, the program works normally as expected.
+For all five of these scenarios, the program worked as expected.
 
--------------------------------------------------------------------------------------------------------------------------------------------------
 
 In terms of both recursive and non-recursive testing we tested scenarios such as:
 		1)Whether decompression and compression will work if the Huffman codebook is in another directory
