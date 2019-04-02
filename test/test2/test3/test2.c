@@ -194,7 +194,7 @@ int recursive_function(int fd, char * file, char flag, char ** codes, char ** to
 	struct dirent * de;
 	int sum = 0;
 	if (!(dr = opendir(file))) {
-		printf("Error: Could not open directory \"%s\". Please try again.\n", file);
+		printf("Error: Could not open %s. Please try again.\n", file);
 		return -1;
 	}
 	/* Traverse through directory while it still has files or subdirectories */
@@ -228,13 +228,10 @@ int recursive_function(int fd, char * file, char flag, char ** codes, char ** to
 				char * hczfile = strcat(new_path, ".hcz");
 				int fd_hcz = open(hczfile, O_WRONLY | O_CREAT , 0644);
 				if (fd_hcz < 0) {
-					printf("Error: Cannot create or open file \"%s\". Skipping compression of %s.\n", hczfile, new_path);
+					printf("Error: Cannot create or open %s. Skipping compression of %s.\n", hczfile, new_path);
 					continue;
 				}
-				/* If compress failed because of unknown token, completely terminate program */
-				if (compress(fd_hcz, input, total_length, codes, tokens, size) == -1) {
-					exit(EXIT_FAILURE);
-				}
+				compress(fd_hcz, input, total_length, codes, tokens, size);
 				close(fd_hcz);
 			} else if (flag == 'd') {
 				char * test = (char *)malloc(sizeof(char) * 5);
@@ -247,7 +244,7 @@ int recursive_function(int fd, char * file, char flag, char ** codes, char ** to
 				resfile[strlen(new_path) - 4] = '\0';	
 				int fd_res = open(resfile, O_WRONLY | O_CREAT , 0644);
 				if (fd_res < 0) {
-					printf("Error: Cannot create or open file \"%s\". Skipping decompression of \"%s\".\n", resfile, new_path);
+					printf("Error: Cannot create or open %s. Skipping decompression of %s.\n", resfile, new_path);
 					continue;
 				}
 				decompress(fd_res, input, total_length, codes, tokens, size);
@@ -287,33 +284,36 @@ int main(int argc, char ** argv) {
 		flag = argv[1][1];
 	}
 	if (flag != 'b' && flag != 'c' && flag != 'd') {
-		printf("Error: Invalid flag(s). Please try again with -b, -c, or -d. You can also add -R for a recursive call.\n");
+		printf("Error: Invalid flag(s). Please try again with -b, -c, or -d.\n");
 		return EXIT_FAILURE;
 	}
-	struct stat pstat;
-	if (stat(file, &pstat) != 0) {
-		printf("Error: Directory or file \"%s\" does not exist. Please try again.\n", file);
-		return EXIT_FAILURE;
-	}
-	/* Check if user inputted a directory or a file */
-	is_file = S_ISREG(pstat.st_mode);
-	if (recursive && is_file) {
-		int i = i;
-		int path_check = 0;
-		for (i = 0; i < strlen(file); ++i) {
-			if (file[i] == '/') {
-				path_check = 1;
-				break;
+	if (recursive) {
+		struct stat pstat;
+		if (stat(file, &pstat) != 0) {
+			printf("Error: You lack permissions to the file or path specified, or it doesn't exist. Please try again.\n");
+			return EXIT_FAILURE;
+		}
+		/* Check if user inputted a directory or a file */
+		is_file = S_ISREG(pstat.st_mode);
+		if (is_file) {
+			int i = i;
+			int path_check = 0;
+			for (i = 0; i < strlen(file); ++i) {
+				if (file[i] == '/') {
+					path_check = 1;
+					break;
+				}
+		
+			}
+			/* Issue warning if user entered a file but without a path */
+			if (!path_check) {
+				printf("Warning: You specified a file, not a path. Continuing operation.\n");
 			}
 		}
-		/* Issue warning if user entered a file but without a path */
-		if (!path_check) {
-			printf("Warning: You specified a file, not a path. Continuing operation.\n");
+		/* Get rid of trailing '/' if present */
+		if (file[strlen(file) - 1] == '/') {
+			file[strlen(file) - 1] = '\0';
 		}
-	}
-	/* Get rid of trailing '/' if present */
-	if (file[strlen(file) - 1] == '/') {
-		file[strlen(file) - 1] = '\0';
 	}
 	/* Recursively operating on a file is essentially the same as no recursion */
 	if (is_file) {
@@ -347,6 +347,11 @@ int main(int argc, char ** argv) {
 			if (size > 0) {
 				huffman(size, head, fd_codebook);
 			} 
+/*			else if (size == 1) {
+				write(fd_codebook,"0\t",2);
+				write(fd_codebook, head->token, strlen(head->token));
+				write(fd_codebook,"\n", 1);
+			} */
 			write(fd_codebook,"\n",1);
 			close(fd_codebook);
 		}
@@ -356,16 +361,6 @@ int main(int argc, char ** argv) {
 				return EXIT_FAILURE;
 			} else if (argc < (5 + recursive - 1)) {
 				printf("Error: Not enough arguments. Please try again.\n");
-				return EXIT_FAILURE;
-			}
-			/* Check to ensure HuffmanCodebook file was provided */
-			if (strlen(argv[argc - 1]) < strlen("HuffmanCodebook")) {
-				printf("Error: HuffmanCodebook file required. Please try again.\n");
-				return EXIT_FAILURE;
-			}
-			char * test_codebook = argv[argc - 1] + (strlen(argv[argc - 1]) - 15);
-			if (strcmp(test_codebook, "HuffmanCodebook") != 0) {
-				printf("Error: HuffmanCodebook file required. Please try again.\n");
 				return EXIT_FAILURE;
 			}
 			int fd_codebook = open(argv[argc - 1], O_RDONLY);
@@ -418,7 +413,7 @@ int main(int argc, char ** argv) {
 		}
 		close(fd_file);
 	/* Separate operation for recursion of a directory */
-	} else if (recursive) {
+	} else {
 		if (flag == 'b') {
 			if (argc < 4) {
 				printf("Error: Not enough arguments. Please try again.\n");
@@ -438,6 +433,12 @@ int main(int argc, char ** argv) {
 			if (size > 0) {
 				huffman(size, head, fd_codebook);	
 			} 
+/*			else if (size == 1) {
+				write(fd_codebook,"0\t",2);
+				write(fd_codebook, head->token, strlen(head->token));
+				write(fd_codebook,"\n", 1);
+			}	
+*/
 			write(fd_codebook,"\n",1);
 			close(fd_codebook);
 		} else if (flag == 'c' || flag == 'd') {
@@ -446,16 +447,6 @@ int main(int argc, char ** argv) {
 				return EXIT_FAILURE;
 			} else if (argc > 5) {
 				printf("Error: Too many arguments. Please try again.\n");
-				return EXIT_FAILURE;
-			}
-			/* Check to ensure HuffmanCodebook file was provided */ 
-			if (strlen(argv[argc - 1]) < strlen("HuffmanCodebook")) {
-				printf("Error: HuffmanCodebook file required. Please try again.\n");
-				return EXIT_FAILURE;
-			}
-			char * test_codebook = argv[argc - 1] + (strlen(argv[argc - 1]) - 15);
-			if (strcmp(test_codebook, "HuffmanCodebook") != 0) {
-				printf("Error: HuffmanCodebook file required. Please try again.\n");
 				return EXIT_FAILURE;
 			}
 			int fd_codebook = open(argv[argc - 1], O_RDONLY);
@@ -481,10 +472,6 @@ int main(int argc, char ** argv) {
 			free(tokens);
 			close(fd_codebook);
 		}
-	/* User inputted non-regular file but no recursive flag */
-	} else {
-		printf("Error: Directory or non-regular file path specified without recursive flag. Please try again.\n");
-		return EXIT_FAILURE;
 	}
 	free(head);
 	return EXIT_SUCCESS;

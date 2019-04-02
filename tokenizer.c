@@ -32,7 +32,7 @@ int search(char ** arr, int size, char * string) {
 }
 
 /* Parse file for tokens and write corresponding code to .hcz file */
-void compress(int fd, char * input, int length, char ** codes, char ** tokens, int size) {
+int compress(int fd, char * input, int length, char ** codes, char ** tokens, int size) {
 	int i = 0, j = 0;
 	int token_length = 0;
 	int last_whitespace = 0;
@@ -52,7 +52,14 @@ void compress(int fd, char * input, int length, char ** codes, char ** tokens, i
 				last_whitespace += token_length + 1;
 				token_length = 0;
 				/* Write the code that corresponds to the token */
-				write(fd, codes[search(tokens, size, string)], strlen(codes[search(tokens, size, string)]));
+				int index = search(tokens, size, string);
+				if (index != -1) {
+					write(fd, codes[index], strlen(codes[index]));
+				/* If token is not present in codebook, return with error message (should not happen under normal operation) */
+				} else {
+					printf("Error: No corresponding code for token \"%s\". Exiting.\n");
+					return -1;
+				}
 				free(string);
 			} else {
 				++last_whitespace;
@@ -70,6 +77,7 @@ void compress(int fd, char * input, int length, char ** codes, char ** tokens, i
 			++token_length;
 		}
 	}
+	return 0;
 }
 
 /* Read chars from input, and if series of input chars is equal to a code, write the 
