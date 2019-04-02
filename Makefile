@@ -12,7 +12,4 @@ clean:
 	rm -f tokenizer.o
 	rm -f fileCompressor
 	rm -f HuffmanCodebook
-	rm -f *.hcz
-	rm -f test/*.hcz
-	rm -f test/test2/*.hcz
-	rm -f test/test2/test3/*.hcz	
+
