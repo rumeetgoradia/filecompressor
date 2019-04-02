@@ -24,7 +24,8 @@ int count_codebook(char * input, int length) {
 int search(char ** arr, int size, char * string) {
 	int i = 0;
 	for (i = 0; i < size; ++i) {
-		if (strcmp(arr[i], string) == 0) {
+	if (strcmp(arr[i], string) == 0) {
+
 			return i;
 		}
 	}
